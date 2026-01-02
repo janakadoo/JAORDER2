@@ -72,7 +72,7 @@
             padding: 12px 15px;
             border: 2px solid var(--primary);
             border-radius: 50px;
-            font-size: 16px; /* Prevents zoom on iOS */
+            font-size: 16px; 
             background: white;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             outline: none;
@@ -112,10 +112,20 @@
 
         /* Card Middle: Meta Data */
         .card-meta {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: #718096;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .id-tag {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
         }
 
         .stock-tag {
@@ -275,7 +285,7 @@
         // Infinite Scroll State
         let currentFilteredData = [];
         let renderedCount = 0;
-        const BATCH_SIZE = 40; // Smaller batch for mobile smooth scroll
+        const BATCH_SIZE = 40; 
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('orderDate').valueAsDate = new Date();
@@ -327,13 +337,15 @@
                 const qty = cart[id] || '';
                 const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
                 const activeClass = qty ? 'active' : '';
+                
+                // Safe List ID check
+                const listId = item['Item List ID'] || item.ListID || item.ItemListID || '';
 
-                // Mobile Card Template
                 html += `
                 <div id="card-${id}" class="item-card ${activeClass}">
                     <div class="card-top">${item['Item Description'] || item.Item}</div>
                     <div class="card-meta">
-                        <span>#${item['Item List ID'] || ''}</span>
+                        <span class="id-tag">ID: ${listId}</span>
                         <span class="stock-tag">Stock: ${item['On Hand'] || 0}</span>
                     </div>
                     <div class="card-bottom">
@@ -387,7 +399,7 @@
             totals.qty += diffQty;
             totals.amount += diffAmt;
 
-            // UI Update (Only Footer needed, card input updates itself)
+            // UI Update
             document.getElementById('fCount').textContent = totals.count;
             document.getElementById('fQty').textContent = totals.qty;
             document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
@@ -423,7 +435,7 @@
             });
             document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
             
-            // Re-render to show new prices on cards
+            // Re-render to show new prices
             resetRender();
         }
 
@@ -465,7 +477,10 @@
             doc.setFillColor(230,230,230);
             doc.rect(14, y-6, 182, 8, 'F');
             doc.setFont(undefined, 'bold');
-            doc.text("Item", 16, y);
+            
+            // ADDED: List ID Column
+            doc.text("ID", 16, y);
+            doc.text("Item", 40, y);
             doc.text("Price", 130, y);
             doc.text("Qty", 155, y);
             doc.text("Total", 175, y);
@@ -479,8 +494,12 @@
                 
                 if(y > 270) { doc.addPage(); y = 20; }
                 
-                const desc = (item['Item Description'] || item.Item).substring(0, 50);
-                doc.text(desc, 14, y);
+                // ADDED: List ID Data
+                const listId = (item['Item List ID'] || item.ListID || '').toString().substring(0, 8);
+                const desc = (item['Item Description'] || item.Item).substring(0, 45);
+                
+                doc.text(listId, 16, y);
+                doc.text(desc, 40, y);
                 doc.text(price.toFixed(2), 130, y);
                 doc.text(qty.toString(), 155, y);
                 doc.text((qty*price).toFixed(2), 175, y);
