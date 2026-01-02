@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jayananda Associates - Tablet Order System</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a6fd8;
+            --accent: #28a745;
+            --bg: #f4f7f6;
+            --text: #333;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 100px; /* Space for sticky footer */
+        }
+
+        /* --- HEADER & FORM --- */
+        .container {
+            padding: 15px;
+            max-width: 100%;
+        }
+
+        .header-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .header-title {
+            margin: 0 0 15px 0;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px; 
+            background: #fff;
+        }
+
+        /* --- SEARCH --- */
+        .search-bar {
+            position: sticky;
+            top: 10px;
+            z-index: 90;
+            margin-bottom: 15px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        /* --- TABLE --- */
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .item-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .item-list th {
+            background: #eee;
+            color: #444;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .item-list td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        /* Cell Styles */
+        .desc-cell { display: flex; flex-direction: column; }
+        .item-name { font-weight: 600; font-size: 1rem; color: #333; }
+        .item-meta { font-size: 0.85rem; color: #888; margin-top: 4px; }
+        .stock-badge { 
+            background: #e0e7ff; color: var(--primary); 
+            padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.8rem;
+        }
+
+        .price-text { font-weight: 600; color: #555; }
+        .amount-text { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+
+        /* The Input Field */
+        .qty-input {
+            width: 90px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.3rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-weight: bold;
+            background: #f9f9f9;
+        }
+
+        .qty-input:focus {
+            background: #fff;
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        tr.active-row { background-color: #f0fdf4; }
+        tr.active-row .qty-input { 
+            background-color: #fff; 
+            border-color: var(--accent); 
+            color: var(--accent);
+        }
+
+        /* --- STICKY FOOTER --- */
+        .footer-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-top: 1px solid #eee;
+        }
+
+        .totals { display: flex; gap: 20px; }
+        .total-item { display: flex; flex-direction: column; }
+        .total-label { font-size: 0.75rem; color: #888; text-transform: uppercase; }
+        .total-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+        .grand-total .total-value { color: var(--accent); }
+
+        .actions { display: flex; gap: 10px; }
+
+        .btn {
+            height: 50px;
+            padding: 0 25px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: #fee2e2; color: #ef4444; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 900px) {
+            .hide-on-tablet { display: none; }
+            .container { padding: 10px; }
+            .header-card { padding: 15px; }
+        }
+
+        .loading { padding: 40px; text-align: center; color: #888; }
+        .scroll-hint { text-align: center; padding: 20px; color: #999; font-style: italic; }
+        
+        @media print {
+            .search-bar, .footer-bar, .form-control { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-card">
+        <h1 class="header-title">Jayananda Order Pad</h1>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Customer</label>
+                <input type="text" id="customerName" class="form-control" placeholder="Customer Name">
+            </div>
+            <div class="form-group">
+                <label>Rep Name</label>
+                <input type="text" id="repName" class="form-control" placeholder="Rep Name">
+            </div>
+            <div class="form-group">
+                <label>Payment Type</label>
+                <select id="priceType" class="form-control" onchange="changePriceType()">
+                    <option value="cash">For Cash</option>
+                    <option value="credit">For Credit</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="orderDate" class="form-control">
+            </div>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍 Search Item, Code or ID..." oninput="debounceSearch()">
+    </div>
+
+    <div id="loadingMsg" class="loading">Loading Items...</div>
+
+    <div class="table-wrapper">
+        <table class="item-list">
+            <thead>
+                <tr>
+                    <th class="hide-on-tablet">List ID</th>
+                    <th class="hide-on-tablet">Code</th>
+                    <th>Description / Info</th>
+                    <th>Price</th>
+                    <th style="width: 100px; text-align: center;">Qty</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+        <div id="scrollSentinel" class="scroll-hint">Loading more items...</div>
+    </div>
+</div>
+
+<div class="footer-bar">
+    <div class="totals">
+        <div class="total-item">
+            <span class="total-label">Count</span>
+            <span class="total-value" id="fCount">0</span>
+        </div>
+        <div class="total-item">
+            <span class="total-label">Total Qty</span>
+            <span class="total-value" id="fQty">0</span>
+        </div>
+        <div class="total-item grand-total">
+            <span class="total-label">Amount</span>
+            <span class="total-value" id="fAmount">0.00</span>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="btn btn-danger" onclick="clearOrder()">Clear</button>
+        <button class="btn btn-primary" onclick="generatePDF()">PDF</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    const FILE_UUID = '9d23272e-bb43-4c30-8c23-01b1156e2355';
+    let inventory = [];
+    let itemMap = {};
+    let cart = {}; 
+    let currentType = 'cash';
+    let totals = { count: 0, qty: 0, amount: 0 };
+    
+    // Lazy Load Variables
+    let currentFilteredData = [];
+    let renderedCount = 0;
+    const BATCH_SIZE = 50;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('orderDate').valueAsDate = new Date();
+        loadData();
+        setupInfiniteScroll();
+    });
+
+    async function loadData() {
+        try {
+            const res = await fetch(`https://api.jsonsilo.com/public/${FILE_UUID}`);
+            inventory = await res.json();
+            
+            inventory.forEach((item, index) => {
+                item._id = index; 
+                itemMap[index] = item;
+            });
+
+            document.getElementById('loadingMsg').style.display = 'none';
+            // Init with full inventory
+            currentFilteredData = inventory;
+            renderTableReset();
+        } catch (e) {
+            document.getElementById('loadingMsg').textContent = "Error loading data.";
+            console.error(e);
+        }
+    }
+
+    // Reset and Render First Batch
+    function renderTableReset() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        renderedCount = 0;
+        renderNextBatch();
+    }
+
+    // Render Next Batch (Infinite Scroll)
+    function renderNextBatch() {
+        const tbody = document.getElementById('tableBody');
+        const total = currentFilteredData.length;
+        
+        // If all rendered, hide sentinel
+        if (renderedCount >= total) {
+            document.getElementById('scrollSentinel').style.display = 'none';
+            return;
+        } else {
+            document.getElementById('scrollSentinel').style.display = 'block';
+        }
+
+        const nextLimit = Math.min(renderedCount + BATCH_SIZE, total);
+        let html = '';
+
+        for(let i = renderedCount; i < nextLimit; i++) {
+            const item = currentFilteredData[i];
+            const id = item._id;
+            
+            const listId = item['Item List ID'] || item.ListID || item.ItemListID || '';
+            const code = item.Item || '';
+            const desc = item['Item Description'] || '';
+            
+            const qty = cart[id] || '';
+            const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+            const amount = qty ? (qty * price).toFixed(2) : '0.00';
+            const rowClass = qty ? 'active-row' : '';
+
+            html += `
+            <tr id="r-${id}" class="${rowClass}">
+                <td class="hide-on-tablet">${listId}</td>
+                <td class="hide-on-tablet">${code}</td>
+                <td>
+                    <div class="desc-cell">
+                        <span class="item-name">${desc}</span>
+                        <div class="item-meta">
+                            <span>Code: ${code}</span> &bull; 
+                            <span class="stock-badge">Stock: ${item['On Hand'] || 0}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="price-text" id="p-${id}">${price.toFixed(2)}</span>
+                </td>
+                <td>
+                    <input type="number" inputmode="numeric" pattern="[0-9]*"
+                        class="qty-input" 
+                        id="in-${id}"
+                        value="${qty}" 
+                        placeholder="0"
+                        onfocus="this.select()"
+                        oninput="updateItem(${id}, this.value)">
+                </td>
+                <td style="text-align: right;">
+                    <span class="amount-text" id="a-${id}">${amount}</span>
+                </td>
+            </tr>`;
+        }
+        
+        tbody.insertAdjacentHTML('beforeend', html);
+        renderedCount = nextLimit;
+        
+        if (renderedCount >= total) {
+            document.getElementById('scrollSentinel').style.display = 'none';
+        }
+    }
+
+    function setupInfiniteScroll() {
+        window.addEventListener('scroll', () => {
+            const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+            // If near bottom (within 200px)
+            if (scrollTop + clientHeight >= scrollHeight - 200) {
+                renderNextBatch();
+            }
+        });
+    }
+
+    function updateItem(id, valStr) {
+        const val = parseInt(valStr) || 0;
+        const item = itemMap[id];
+        const price = currentType === 'cash' ? (item['For Cash'] || 0) : (item['For Credit'] || 0);
+
+        const oldQty = cart[id] || 0;
+        const diffQty = val - oldQty;
+        const diffAmt = diffQty * price;
+
+        if (val > 0) {
+            if (!cart[id]) totals.count++;
+            cart[id] = val;
+            document.getElementById(`r-${id}`)?.classList.add('active-row');
+        } else {
+            if (cart[id]) totals.count--;
+            delete cart[id];
+            document.getElementById(`r-${id}`)?.classList.remove('active-row');
+        }
+
+        totals.qty += diffQty;
+        totals.amount += diffAmt;
+
+        const amtCell = document.getElementById(`a-${id}`);
+        if(amtCell) amtCell.textContent = (val * price).toFixed(2);
+        
+        // Footer Update
+        document.getElementById('fCount').textContent = totals.count;
+        document.getElementById('fQty').textContent = totals.qty;
+        document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
+    }
+
+    let searchTimer;
+    function debounceSearch() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            
+            if(!term) { 
+                currentFilteredData = inventory;
+            } else {
+                currentFilteredData = inventory.filter(item => 
+                    (item['Item Description']||'').toLowerCase().includes(term) || 
+                    (item.Item||'').toLowerCase().includes(term) ||
+                    (item['Item List ID']||'').toString().includes(term)
+                );
+            }
+            renderTableReset(); // Reset view with new filtered data
+        }, 300);
+    }
+
+    function changePriceType() {
+        currentType = document.getElementById('priceType').value;
+        totals.amount = 0;
+        
+        Object.keys(cart).forEach(id => {
+            const item = itemMap[id];
+            const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+            totals.amount += (cart[id] * price);
+        });
+        
+        document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
+        
+        // Force re-render to update visible prices
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        renderedCount = 0;
+        renderNextBatch(); 
+        
+        // Restore focus? No, user just clicked select box.
+    }
+
+    function clearOrder() {
+        if(confirm("Clear Order?")) {
+            cart = {};
+            totals = { count: 0, qty: 0, amount: 0 };
+            document.getElementById('fCount').innerText = "0";
+            document.getElementById('fQty').innerText = "0";
+            document.getElementById('fAmount').innerText = "0.00";
+            
+            document.getElementById('searchInput').value = "";
+            currentFilteredData = inventory;
+            renderTableReset();
+        }
+    }
+
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const cName = document.getElementById('customerName').value || "Walk-in";
+        const rName = document.getElementById('repName').value || "-";
+        const pType = currentType === 'cash' ? "Cash" : "Credit";
+        const date = document.getElementById('orderDate').value;
+        
+        // --- HEADER ---
+        doc.setTextColor(0, 0, 0); 
+        doc.setFontSize(22);
+        doc.text("Jayananda Associates", 105, 20, { align: "center" });
+        doc.setFontSize(12);
+        doc.text("Order Summary", 105, 30, { align: "center" });
+
+        // Info Block
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.text(`Customer: ${cName}`, 14, 50);
+        doc.text(`Rep Name: ${rName}`, 14, 56);
+        doc.text(`Date: ${date}`, 150, 50);
+        doc.text(`Type: ${pType}`, 150, 56);
+
+        // Table Header
+        let y = 65;
+        doc.setFontSize(10);
+        doc.setFillColor(230,230,230);
+        doc.rect(14, y-6, 182, 8, 'F');
+        doc.setFont(undefined, 'bold');
+        doc.text("Item", 16, y);
+        doc.text("Price", 130, y);
+        doc.text("Qty", 155, y);
+        doc.text("Total", 175, y);
+        doc.setFont(undefined, 'normal');
+        y += 8;
+
+        // Items
+        Object.keys(cart).forEach(id => {
+            const item = itemMap[id];
+            const qty = cart[id];
+            const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+            
+            if(y > 270) { doc.addPage(); y = 20; }
+            
+            const desc = (item['Item Description'] || item.Item).substring(0, 55);
+            doc.text(desc, 14, y);
+            doc.text(price.toFixed(2), 130, y);
+            doc.text(qty.toString(), 155, y);
+            doc.text((qty*price).toFixed(2), 175, y);
+            y += 7;
+        });
+
+        // Footer Totals
+        doc.line(14, y, 196, y);
+        y += 10;
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(12);
+        
+        doc.text(`Total Items: ${totals.count}`, 14, y);
+        doc.text(`Total Qty: ${totals.qty}`, 80, y); 
+        doc.text(`Grand Total: Rs. ${totals.amount.toFixed(2)}`, 140, y);
+        
+        doc.save("Jayananda Associates Order Summary.pdf");
+    }
+</script>
+</body>
+</html>
