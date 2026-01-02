@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jayananda Mobile Order</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --accent: #28a745;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 120px; /* Space for footer */
+        }
+
+        /* --- COMPACT HEADER --- */
+        .header-section {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .app-title {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .form-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .full-width { grid-column: span 2; }
+
+        /* --- SEARCH --- */
+        .search-container {
+            padding: 0 15px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--primary);
+            border-radius: 50px;
+            font-size: 16px; /* Prevents zoom on iOS */
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            outline: none;
+        }
+
+        /* --- ITEM LIST (MOBILE CARDS) --- */
+        .list-container {
+            padding: 15px;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .item-card.active {
+            border-color: var(--accent);
+            background-color: #f0fff4;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+        }
+
+        /* Card Top: Description */
+        .card-top {
+            font-weight: 600;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #1a202c;
+        }
+
+        /* Card Middle: Meta Data */
+        .card-meta {
+            font-size: 0.75rem;
+            color: #718096;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stock-tag {
+            background: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        /* Card Bottom: Price & Input */
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+            padding-top: 8px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        .price-tag {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #4a5568;
+        }
+
+        .qty-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-input {
+            width: 80px;
+            height: 44px; /* Big touch target */
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            background: #f7fafc;
+            color: #2d3748;
+        }
+        
+        .qty-input:focus {
+            background: white;
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .item-card.active .qty-input {
+            background: white;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* --- STICKY FOOTER --- */
+        .footer-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 12px 15px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .total-label { font-size: 0.8rem; color: #718096; }
+        .total-amount { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+        .total-qty { font-size: 0.9rem; font-weight: 600; color: #718096; }
+
+        .footer-actions {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            height: 48px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        
+        .btn-clear { background: #fed7d7; color: #c53030; }
+        .btn-save { background: var(--primary); color: white; }
+        
+        /* Utils */
+        .loading { text-align: center; padding: 40px; color: #a0aec0; }
+        .sentinel { text-align: center; padding: 20px; color: #cbd5e0; font-size: 0.8rem; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <h1 class="app-title">Jayananda Order</h1>
+        <div class="form-compact">
+            <input type="text" id="customerName" class="form-input full-width" placeholder="Customer Name">
+            <input type="text" id="repName" class="form-input" placeholder="Rep Name">
+            <select id="priceType" class="form-input" onchange="changePriceType()">
+                <option value="cash">Cash</option>
+                <option value="credit">Credit</option>
+            </select>
+            <input type="date" id="orderDate" class="form-input full-width">
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Items..." oninput="debounceSearch()">
+    </div>
+
+    <div id="loadingMsg" class="loading">Syncing Data...</div>
+    <div id="itemsContainer" class="list-container">
+        </div>
+    <div id="sentinel" class="sentinel">Loading more...</div>
+
+    <div class="footer-nav">
+        <div class="footer-info">
+            <div>
+                <div class="total-label">Total Amount</div>
+                <div class="total-amount" id="fAmount">0.00</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="total-label">Items / Qty</div>
+                <div class="total-qty"><span id="fCount">0</span> / <span id="fQty">0</span></div>
+            </div>
+        </div>
+        <div class="footer-actions">
+            <button class="btn btn-clear" onclick="clearOrder()">Reset</button>
+            <button class="btn btn-save" onclick="generatePDF()">Download PDF</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const FILE_UUID = '9d23272e-bb43-4c30-8c23-01b1156e2355';
+        let inventory = [];
+        let itemMap = {};
+        let cart = {}; 
+        let currentType = 'cash';
+        let totals = { count: 0, qty: 0, amount: 0 };
+        
+        // Infinite Scroll State
+        let currentFilteredData = [];
+        let renderedCount = 0;
+        const BATCH_SIZE = 40; // Smaller batch for mobile smooth scroll
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('orderDate').valueAsDate = new Date();
+            loadData();
+            setupInfiniteScroll();
+        });
+
+        async function loadData() {
+            try {
+                const res = await fetch(`https://api.jsonsilo.com/public/${FILE_UUID}`);
+                inventory = await res.json();
+                
+                inventory.forEach((item, index) => {
+                    item._id = index; 
+                    itemMap[index] = item;
+                });
+
+                document.getElementById('loadingMsg').style.display = 'none';
+                currentFilteredData = inventory;
+                resetRender();
+            } catch (e) {
+                document.getElementById('loadingMsg').textContent = "Failed to load data";
+            }
+        }
+
+        function resetRender() {
+            document.getElementById('itemsContainer').innerHTML = '';
+            renderedCount = 0;
+            renderNextBatch();
+        }
+
+        function renderNextBatch() {
+            const container = document.getElementById('itemsContainer');
+            const total = currentFilteredData.length;
+            
+            if (renderedCount >= total) {
+                document.getElementById('sentinel').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('sentinel').style.display = 'block';
+            }
+
+            const nextLimit = Math.min(renderedCount + BATCH_SIZE, total);
+            let html = '';
+
+            for(let i = renderedCount; i < nextLimit; i++) {
+                const item = currentFilteredData[i];
+                const id = item._id;
+                const qty = cart[id] || '';
+                const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+                const activeClass = qty ? 'active' : '';
+
+                // Mobile Card Template
+                html += `
+                <div id="card-${id}" class="item-card ${activeClass}">
+                    <div class="card-top">${item['Item Description'] || item.Item}</div>
+                    <div class="card-meta">
+                        <span>#${item['Item List ID'] || ''}</span>
+                        <span class="stock-tag">Stock: ${item['On Hand'] || 0}</span>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="price-tag">Rs. ${price.toFixed(2)}</div>
+                        <div class="qty-wrapper">
+                            <input type="number" inputmode="numeric" pattern="[0-9]*"
+                                class="qty-input" 
+                                id="in-${id}"
+                                value="${qty}" 
+                                placeholder="0"
+                                onfocus="this.select()"
+                                oninput="updateItem(${id}, this.value)">
+                        </div>
+                    </div>
+                </div>`;
+            }
+            
+            container.insertAdjacentHTML('beforeend', html);
+            renderedCount = nextLimit;
+        }
+
+        function setupInfiniteScroll() {
+            window.addEventListener('scroll', () => {
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
+                    renderNextBatch();
+                }
+            });
+        }
+
+        function updateItem(id, valStr) {
+            const val = parseInt(valStr) || 0;
+            const item = itemMap[id];
+            const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+
+            // Calc Difference
+            const oldQty = cart[id] || 0;
+            const diffQty = val - oldQty;
+            const diffAmt = diffQty * price;
+
+            // Update State
+            if (val > 0) {
+                if (!cart[id]) totals.count++;
+                cart[id] = val;
+                document.getElementById(`card-${id}`).classList.add('active');
+            } else {
+                if (cart[id]) totals.count--;
+                delete cart[id];
+                document.getElementById(`card-${id}`).classList.remove('active');
+            }
+
+            totals.qty += diffQty;
+            totals.amount += diffAmt;
+
+            // UI Update (Only Footer needed, card input updates itself)
+            document.getElementById('fCount').textContent = totals.count;
+            document.getElementById('fQty').textContent = totals.qty;
+            document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
+        }
+
+        let searchTimer;
+        function debounceSearch() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                const term = document.getElementById('searchInput').value.toLowerCase();
+                if(!term) { 
+                    currentFilteredData = inventory;
+                } else {
+                    currentFilteredData = inventory.filter(item => 
+                        (item['Item Description']||'').toLowerCase().includes(term) || 
+                        (item.Item||'').toLowerCase().includes(term) ||
+                        (item['Item List ID']||'').toString().includes(term)
+                    );
+                }
+                resetRender();
+            }, 300);
+        }
+
+        function changePriceType() {
+            currentType = document.getElementById('priceType').value;
+            totals.amount = 0;
+            
+            // Recalculate Totals
+            Object.keys(cart).forEach(id => {
+                const item = itemMap[id];
+                const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+                totals.amount += (cart[id] * price);
+            });
+            document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
+            
+            // Re-render to show new prices on cards
+            resetRender();
+        }
+
+        function clearOrder() {
+            if(confirm("Start new order?")) {
+                cart = {};
+                totals = { count: 0, qty: 0, amount: 0 };
+                document.getElementById('fCount').innerText = "0";
+                document.getElementById('fQty').innerText = "0";
+                document.getElementById('fAmount').innerText = "0.00";
+                document.getElementById('searchInput').value = "";
+                currentFilteredData = inventory;
+                resetRender();
+            }
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const cName = document.getElementById('customerName').value || "Walk-in";
+            const rName = document.getElementById('repName').value || "-";
+            const pType = currentType === 'cash' ? "Cash" : "Credit";
+            const date = document.getElementById('orderDate').value;
+
+            // PDF Styling
+            doc.setFontSize(22);
+            doc.text("Jayananda Associates", 105, 20, { align: "center" });
+            doc.setFontSize(12);
+            doc.text("Order Summary", 105, 30, { align: "center" });
+
+            doc.setFontSize(10);
+            doc.text(`Customer: ${cName}`, 14, 45);
+            doc.text(`Rep: ${rName}`, 14, 51);
+            doc.text(`Date: ${date}`, 150, 45);
+            doc.text(`Type: ${pType}`, 150, 51);
+
+            let y = 60;
+            doc.setFillColor(230,230,230);
+            doc.rect(14, y-6, 182, 8, 'F');
+            doc.setFont(undefined, 'bold');
+            doc.text("Item", 16, y);
+            doc.text("Price", 130, y);
+            doc.text("Qty", 155, y);
+            doc.text("Total", 175, y);
+            doc.setFont(undefined, 'normal');
+            y += 8;
+
+            Object.keys(cart).forEach(id => {
+                const item = itemMap[id];
+                const qty = cart[id];
+                const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+                
+                if(y > 270) { doc.addPage(); y = 20; }
+                
+                const desc = (item['Item Description'] || item.Item).substring(0, 50);
+                doc.text(desc, 14, y);
+                doc.text(price.toFixed(2), 130, y);
+                doc.text(qty.toString(), 155, y);
+                doc.text((qty*price).toFixed(2), 175, y);
+                y += 7;
+            });
+
+            doc.line(14, y, 196, y);
+            y += 10;
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(12);
+            doc.text(`Total Items: ${totals.count}`, 14, y);
+            doc.text(`Total Qty: ${totals.qty}`, 80, y);
+            doc.text(`Grand Total: Rs. ${totals.amount.toFixed(2)}`, 140, y);
+            
+            doc.save("Jayananda Associates Order Summary.pdf");
+        }
+    </script>
+</body>
+</html>
