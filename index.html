@@ -8,6 +8,7 @@
         :root {
             --primary: #667eea;
             --accent: #28a745;
+            --share: #805ad5; /* Purple for share */
             --bg: #f0f2f5;
             --card-bg: #ffffff;
             --text: #2d3748;
@@ -24,7 +25,7 @@
             padding-bottom: 120px; /* Space for footer */
         }
 
-        /* --- HEADER --- */
+        /* --- COMPACT HEADER --- */
         .header-section {
             background: var(--primary);
             color: white;
@@ -78,7 +79,7 @@
             outline: none;
         }
 
-        /* --- ITEM LIST --- */
+        /* --- ITEM LIST (MOBILE CARDS) --- */
         .list-container {
             padding: 15px;
         }
@@ -102,6 +103,7 @@
             box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
         }
 
+        /* Card Top: Description */
         .card-top {
             font-weight: 600;
             font-size: 0.95rem;
@@ -109,6 +111,7 @@
             color: #1a202c;
         }
 
+        /* Card Middle: Meta Data */
         .card-meta {
             font-size: 0.8rem;
             color: #718096;
@@ -134,6 +137,7 @@
             color: #4a5568;
         }
 
+        /* Card Bottom: Price & Input */
         .card-bottom {
             display: flex;
             justify-content: space-between;
@@ -157,7 +161,7 @@
 
         .qty-input {
             width: 80px;
-            height: 44px;
+            height: 44px; /* Big touch target */
             text-align: center;
             font-size: 1.2rem;
             font-weight: bold;
@@ -180,14 +184,14 @@
             color: var(--accent);
         }
 
-        /* --- FOOTER --- */
+        /* --- STICKY FOOTER --- */
         .footer-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             background: white;
-            padding: 12px 15px;
+            padding: 12px 10px;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
             z-index: 1000;
             border-top-left-radius: 15px;
@@ -199,16 +203,18 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            padding: 0 5px;
         }
 
         .total-label { font-size: 0.8rem; color: #718096; }
         .total-amount { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
         .total-qty { font-size: 0.9rem; font-weight: 600; color: #718096; }
 
+        /* Updated 3-Column Footer Actions */
         .footer-actions {
             display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 10px;
+            grid-template-columns: 0.8fr 1fr 1fr;
+            gap: 8px;
         }
 
         .btn {
@@ -216,13 +222,18 @@
             border-radius: 8px;
             height: 48px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.95rem;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .btn-clear { background: #fed7d7; color: #c53030; }
         .btn-save { background: var(--primary); color: white; }
+        .btn-share { background: var(--accent); color: white; }
         
+        /* Utils */
         .loading { text-align: center; padding: 40px; color: #a0aec0; }
         .sentinel { text-align: center; padding: 20px; color: #cbd5e0; font-size: 0.8rem; }
 
@@ -248,7 +259,8 @@
     </div>
 
     <div id="loadingMsg" class="loading">Syncing Data...</div>
-    <div id="itemsContainer" class="list-container"></div>
+    <div id="itemsContainer" class="list-container">
+        </div>
     <div id="sentinel" class="sentinel">Loading more...</div>
 
     <div class="footer-nav">
@@ -262,9 +274,11 @@
                 <div class="total-qty"><span id="fCount">0</span> / <span id="fQty">0</span></div>
             </div>
         </div>
+        
         <div class="footer-actions">
             <button class="btn btn-clear" onclick="clearOrder()">Reset</button>
-            <button class="btn btn-save" onclick="handlePDF()">Share/Save PDF</button>
+            <button class="btn btn-save" onclick="downloadPDF()">Save PDF</button>
+            <button class="btn btn-share" onclick="sharePDF()">Share</button>
         </div>
     </div>
 
@@ -277,6 +291,7 @@
         let currentType = 'cash';
         let totals = { count: 0, qty: 0, amount: 0 };
         
+        // Infinite Scroll State
         let currentFilteredData = [];
         let renderedCount = 0;
         const BATCH_SIZE = 40; 
@@ -291,10 +306,12 @@
             try {
                 const res = await fetch(`https://api.jsonsilo.com/public/${FILE_UUID}`);
                 inventory = await res.json();
+                
                 inventory.forEach((item, index) => {
                     item._id = index; 
                     itemMap[index] = item;
                 });
+
                 document.getElementById('loadingMsg').style.display = 'none';
                 currentFilteredData = inventory;
                 resetRender();
@@ -312,21 +329,27 @@
         function renderNextBatch() {
             const container = document.getElementById('itemsContainer');
             const total = currentFilteredData.length;
+            
             if (renderedCount >= total) {
                 document.getElementById('sentinel').style.display = 'none';
                 return;
             } else {
                 document.getElementById('sentinel').style.display = 'block';
             }
+
             const nextLimit = Math.min(renderedCount + BATCH_SIZE, total);
             let html = '';
+
             for(let i = renderedCount; i < nextLimit; i++) {
                 const item = currentFilteredData[i];
                 const id = item._id;
                 const qty = cart[id] || '';
                 const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
                 const activeClass = qty ? 'active' : '';
+                
+                // Safe List ID check
                 const listId = item['Item List ID'] || item.ListID || item.ItemListID || '';
+
                 html += `
                 <div id="card-${id}" class="item-card ${activeClass}">
                     <div class="card-top">${item['Item Description'] || item.Item}</div>
@@ -348,6 +371,7 @@
                     </div>
                 </div>`;
             }
+            
             container.insertAdjacentHTML('beforeend', html);
             renderedCount = nextLimit;
         }
@@ -364,9 +388,13 @@
             const val = parseInt(valStr) || 0;
             const item = itemMap[id];
             const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
+
+            // Calc Difference
             const oldQty = cart[id] || 0;
             const diffQty = val - oldQty;
             const diffAmt = diffQty * price;
+
+            // Update State
             if (val > 0) {
                 if (!cart[id]) totals.count++;
                 cart[id] = val;
@@ -376,8 +404,11 @@
                 delete cart[id];
                 document.getElementById(`card-${id}`).classList.remove('active');
             }
+
             totals.qty += diffQty;
             totals.amount += diffAmt;
+
+            // UI Update
             document.getElementById('fCount').textContent = totals.count;
             document.getElementById('fQty').textContent = totals.qty;
             document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
@@ -404,12 +435,16 @@
         function changePriceType() {
             currentType = document.getElementById('priceType').value;
             totals.amount = 0;
+            
+            // Recalculate Totals
             Object.keys(cart).forEach(id => {
                 const item = itemMap[id];
                 const price = currentType === 'cash' ? (item['For Cash']||0) : (item['For Credit']||0);
                 totals.amount += (cart[id] * price);
             });
             document.getElementById('fAmount').textContent = totals.amount.toFixed(2);
+            
+            // Re-render to show new prices
             resetRender();
         }
 
@@ -426,8 +461,13 @@
             }
         }
 
-        // --- NEW: Hybrid Download/Share Logic for APKs ---
-        async function handlePDF() {
+        // --- PDF GENERATOR (Reusable) ---
+        function createPDFDoc() {
+            if (totals.count === 0) {
+                alert("Please add items to the order first.");
+                return null;
+            }
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
@@ -435,9 +475,8 @@
             const rName = document.getElementById('repName').value || "-";
             const pType = currentType === 'cash' ? "Cash" : "Credit";
             const date = document.getElementById('orderDate').value;
-            const orderNo = "Order_" + Date.now();
-
-            // Build PDF
+            
+            // PDF HEADER
             doc.setFontSize(22);
             doc.text("Jayananda Associates", 105, 20, { align: "center" });
             doc.setFontSize(12);
@@ -449,18 +488,23 @@
             doc.text(`Date: ${date}`, 150, 45);
             doc.text(`Type: ${pType}`, 150, 51);
 
+            // TABLE HEADERS
             let y = 60;
             doc.setFillColor(230,230,230);
             doc.rect(14, y-6, 182, 8, 'F');
             doc.setFont(undefined, 'bold');
-            doc.text("ID", 16, y);
-            doc.text("Item", 40, y);
-            doc.text("Price", 130, y);
-            doc.text("Qty", 155, y);
-            doc.text("Total", 175, y);
+            
+            doc.text("#", 15, y);          
+            doc.text("Code", 25, y);       
+            doc.text("Description", 55, y); 
+            doc.text("Price", 135, y);     
+            doc.text("Qty", 160, y);       
+            doc.text("Total", 180, y);     
             doc.setFont(undefined, 'normal');
             y += 8;
 
+            // TABLE ROWS
+            let rowCount = 1;
             Object.keys(cart).forEach(id => {
                 const item = itemMap[id];
                 const qty = cart[id];
@@ -468,17 +512,22 @@
                 
                 if(y > 270) { doc.addPage(); y = 20; }
                 
-                const listId = (item['Item List ID'] || item.ListID || '').toString().substring(0, 8);
-                const desc = (item['Item Description'] || item.Item).substring(0, 45);
+                const listId = (item['Item List ID'] || item.ListID || '').toString().substring(0, 10);
+                const rawDesc = (item['Item Description'] || item.Item);
+                const desc = rawDesc.length > 35 ? rawDesc.substring(0, 35) + "..." : rawDesc;
                 
-                doc.text(listId, 16, y);
-                doc.text(desc, 40, y);
-                doc.text(price.toFixed(2), 130, y);
-                doc.text(qty.toString(), 155, y);
-                doc.text((qty*price).toFixed(2), 175, y);
+                doc.text(rowCount.toString(), 15, y);        
+                doc.text(listId, 25, y);                     
+                doc.text(desc, 55, y);                       
+                doc.text(price.toFixed(2), 135, y);          
+                doc.text(qty.toString(), 160, y);            
+                doc.text((qty*price).toFixed(2), 180, y);    
+                
                 y += 7;
+                rowCount++;
             });
 
+            // FOOTER TOTALS
             doc.line(14, y, 196, y);
             y += 10;
             doc.setFont(undefined, 'bold');
@@ -487,29 +536,40 @@
             doc.text(`Total Qty: ${totals.qty}`, 80, y);
             doc.text(`Grand Total: Rs. ${totals.amount.toFixed(2)}`, 140, y);
 
-            // --- MOBILE SHARE LOGIC ---
-            try {
-                // 1. Create a Blob
-                const pdfBlob = doc.output('blob');
-                
-                // 2. Create a File object
-                const file = new File([pdfBlob], `${orderNo}.pdf`, { type: "application/pdf" });
+            return { doc, cName };
+        }
 
-                // 3. Try to use Native Share (Android/iOS)
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        // --- DOWNLOAD FUNCTION ---
+        function downloadPDF() {
+            const pdfData = createPDFDoc();
+            if(!pdfData) return;
+            
+            const fileName = `Order_${pdfData.cName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+            pdfData.doc.save(fileName);
+        }
+
+        // --- SHARE FUNCTION ---
+        async function sharePDF() {
+            const pdfData = createPDFDoc();
+            if(!pdfData) return;
+
+            const fileName = `Order_${pdfData.cName.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+            const pdfBlob = pdfData.doc.output('blob');
+            const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+
+            if (navigator.share && navigator.canShare({ files: [file] })) {
+                try {
                     await navigator.share({
                         files: [file],
                         title: 'Order Summary',
-                        text: `Order for ${cName}`
+                        text: `Order for ${pdfData.cName} - Rs. ${totals.amount.toFixed(2)}`
                     });
-                } else {
-                    // 4. Fallback for Desktop or non-supported WebViews
-                    doc.save("Jayananda Associates Order Summary.pdf");
+                } catch (err) {
+                    console.log("Share cancelled");
                 }
-            } catch (err) {
-                console.error("Share failed:", err);
-                // Fallback if user cancels share or permission error
-                doc.save("Jayananda Associates Order Summary.pdf");
+            } else {
+                alert("Sharing is not supported on this device/browser. Downloading instead.");
+                pdfData.doc.save(fileName);
             }
         }
     </script>
