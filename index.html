@@ -8,7 +8,7 @@
         :root {
             --primary: #667eea;
             --accent: #28a745;
-            --share: #805ad5; /* Purple for share */
+            --share: #805ad5;
             --bg: #f0f2f5;
             --card-bg: #ffffff;
             --text: #2d3748;
@@ -425,7 +425,8 @@
                     currentFilteredData = inventory.filter(item => 
                         (item['Item Description']||'').toLowerCase().includes(term) || 
                         (item.Item||'').toLowerCase().includes(term) ||
-                        (item['Item List ID']||'').toString().includes(term)
+                        (item['Item List ID']||'').toString().includes(term) ||
+                        (item.ItemListID||'').toString().includes(term)
                     );
                 }
                 resetRender();
@@ -494,12 +495,13 @@
             doc.rect(14, y-6, 182, 8, 'F');
             doc.setFont(undefined, 'bold');
             
-            doc.text("#", 15, y);          
-            doc.text("Code", 25, y);       
+            doc.text("#", 15, y);           
+            // --- FIX 1: Header is now "Item" ---
+            doc.text("Item", 25, y);        
             doc.text("Description", 55, y); 
-            doc.text("Price", 135, y);     
-            doc.text("Qty", 160, y);       
-            doc.text("Total", 180, y);     
+            doc.text("Price", 135, y);      
+            doc.text("Qty", 160, y);        
+            doc.text("Total", 180, y);      
             doc.setFont(undefined, 'normal');
             y += 8;
 
@@ -512,16 +514,19 @@
                 
                 if(y > 270) { doc.addPage(); y = 20; }
                 
-                const listId = (item['Item List ID'] || item.ListID || '').toString().substring(0, 10);
-                const rawDesc = (item['Item Description'] || item.Item);
+                // --- FIX 2: Get the specific 'Item' field ---
+                const rawItem = item.Item || item.Code || ''; 
+                const displayItem = rawItem.toString().substring(0, 15);
+
+                const rawDesc = (item['Item Description'] || item.Item || '');
                 const desc = rawDesc.length > 35 ? rawDesc.substring(0, 35) + "..." : rawDesc;
                 
-                doc.text(rowCount.toString(), 15, y);        
-                doc.text(listId, 25, y);                     
-                doc.text(desc, 55, y);                       
-                doc.text(price.toFixed(2), 135, y);          
-                doc.text(qty.toString(), 160, y);            
-                doc.text((qty*price).toFixed(2), 180, y);    
+                doc.text(rowCount.toString(), 15, y);         
+                doc.text(displayItem, 25, y); // Showing 'Item' field value             
+                doc.text(desc, 55, y);                        
+                doc.text(price.toFixed(2), 135, y);           
+                doc.text(qty.toString(), 160, y);             
+                doc.text((qty*price).toFixed(2), 180, y);     
                 
                 y += 7;
                 rowCount++;
